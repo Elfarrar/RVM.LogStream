@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RVM.LogStream.API/RVM.LogStream.API.csproj" />
+    <Project Path="src/RVM.LogStream.Domain/RVM.LogStream.Domain.csproj" />
+    <Project Path="src/RVM.LogStream.Infrastructure/RVM.LogStream.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/RVM.LogStream.Test/RVM.LogStream.Test.csproj" />
+  </Folder>
+</Solution>
