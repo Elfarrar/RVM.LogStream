@@ -1,0 +1,94 @@
+@page "/"
+@using RVM.LogStream.Domain.Entities
+@using RVM.LogStream.Domain.Interfaces
+@using RVM.LogStream.Domain.Models
+@inject ILogSourceRepository LogSourceRepo
+@inject ILogEntryRepository LogEntryRepo
+
+<h1>Dashboard</h1>
+
+@if (_loaded)
+{
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-value">@_sources.Count</span>
+            <span class="stat-label">Total Sources</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">@_totalLogCount.ToString("N0")</span>
+            <span class="stat-label">Total Log Entries</span>
+        </div>
+    </div>
+
+    <h2>Volume by Level (Last 24h)</h2>
+    <div class="filter-bar" style="margin-bottom: 1.5rem;">
+        @foreach (var vol in _volumeByLevel)
+        {
+            <span class="badge @GetLevelBadgeClass(vol.Level.ToString())">
+                @vol.Level: @vol.Count.ToString("N0")
+            </span>
+        }
+    </div>
+
+    <h2>Sources</h2>
+    @if (_sources.Count == 0)
+    {
+        <div class="empty-state">No sources registered yet.</div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Last Seen</th>
+                    <th>Total Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var src in _sources)
+                {
+                    <tr>
+                        <td><code>@src.Name</code></td>
+                        <td>@src.LastSeen.ToString("g")</td>
+                        <td>@src.TotalCount.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    <div class="loading">Loading dashboard...</div>
+}
+
+@code {
+    private List<LogSource> _sources = [];
+    private List<LogVolumeByLevel> _volumeByLevel = [];
+    private long _totalLogCount;
+    private bool _loaded;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sources = await LogSourceRepo.GetAllAsync();
+        _totalLogCount = _sources.Sum(s => s.TotalCount);
+
+        var now = DateTime.UtcNow;
+        var from24h = now.AddHours(-24);
+        _volumeByLevel = await LogEntryRepo.GetVolumeByLevelAsync(null, from24h, now);
+
+        _loaded = true;
+    }
+
+    private static string GetLevelBadgeClass(string level) => level switch
+    {
+        "Trace" => "",
+        "Debug" => "",
+        "Information" => "badge-success",
+        "Warning" => "badge-warning",
+        "Error" => "badge-danger",
+        "Fatal" => "badge-danger",
+        _ => ""
+    };
+}

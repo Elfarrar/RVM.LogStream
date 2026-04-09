@@ -1,0 +1,53 @@
+@page "/sources"
+@using RVM.LogStream.Domain.Entities
+@using RVM.LogStream.Domain.Interfaces
+@inject ILogSourceRepository LogSourceRepo
+
+<h1>Sources</h1>
+
+@if (_loaded)
+{
+    @if (_sources.Count == 0)
+    {
+        <div class="empty-state">No sources registered yet.</div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>First Seen</th>
+                    <th>Last Seen</th>
+                    <th>Total Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var src in _sources)
+                {
+                    <tr>
+                        <td><code>@src.Name</code></td>
+                        <td>@src.FirstSeen.ToString("g")</td>
+                        <td>@src.LastSeen.ToString("g")</td>
+                        <td>@src.TotalCount.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    <div class="loading">Loading sources...</div>
+}
+
+@code {
+    private List<LogSource> _sources = [];
+    private bool _loaded;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sources = await LogSourceRepo.GetAllAsync();
+        _loaded = true;
+    }
+}

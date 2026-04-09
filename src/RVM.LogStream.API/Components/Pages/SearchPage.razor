@@ -1,0 +1,148 @@
+@page "/search"
+@using RVM.LogStream.API.Dtos
+@using RVM.LogStream.API.Services
+@using RVM.LogStream.Domain.Entities
+@using RVM.LogStream.Domain.Interfaces
+@inject LogSearchService SearchService
+@inject ILogSourceRepository LogSourceRepo
+
+<h1>Log Search</h1>
+
+<div class="filter-bar">
+    <input class="input-sm" style="width:260px;" placeholder="Search query..."
+           @bind="_query" @bind:event="oninput" />
+
+    <select class="input-sm" @bind="_selectedSource">
+        <option value="">All Sources</option>
+        @foreach (var src in _sources)
+        {
+            <option value="@src.Name">@src.Name</option>
+        }
+    </select>
+
+    <select class="input-sm" @bind="_selectedLevel">
+        <option value="">All Levels</option>
+        <option value="Trace">Trace</option>
+        <option value="Debug">Debug</option>
+        <option value="Information">Information</option>
+        <option value="Warning">Warning</option>
+        <option value="Error">Error</option>
+        <option value="Fatal">Fatal</option>
+    </select>
+
+    <input class="input-sm" type="datetime-local" @bind="_from" />
+    <input class="input-sm" type="datetime-local" @bind="_to" />
+
+    <button class="btn-sm btn-primary" @onclick="ExecuteSearch">Search</button>
+</div>
+
+@if (_searching)
+{
+    <div class="loading">Searching...</div>
+}
+else if (_result is not null)
+{
+    <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+        @_result.TotalCount.ToString("N0") results found
+    </p>
+
+    @if (_result.Items.Count == 0)
+    {
+        <div class="empty-state">No log entries match the current filters.</div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Level</th>
+                    <th>Source</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in _result.Items)
+                {
+                    <tr>
+                        <td style="white-space:nowrap;">@entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td><span class="badge @GetLevelBadgeClass(entry.Level)">@entry.Level</span></td>
+                        <td><code>@entry.Source</code></td>
+                        <td class="truncate" style="max-width:400px;" title="@entry.Message">@Truncate(entry.Message, 120)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <button class="btn-sm" disabled="@(_offset == 0)" @onclick="PreviousPage">Previous</button>
+            <span>Page @((_offset / _limit) + 1) of @TotalPages</span>
+            <button class="btn-sm" disabled="@(_offset + _limit >= _result.TotalCount)" @onclick="NextPage">Next</button>
+        </div>
+    }
+}
+
+@code {
+    private List<LogSource> _sources = [];
+    private string _query = "";
+    private string _selectedSource = "";
+    private string _selectedLevel = "";
+    private DateTime? _from;
+    private DateTime? _to;
+    private int _offset;
+    private int _limit = 50;
+    private bool _searching;
+    private SearchLogsResponse? _result;
+
+    private int TotalPages => _result is null || _result.TotalCount == 0
+        ? 1
+        : (int)Math.Ceiling((double)_result.TotalCount / _limit);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sources = await LogSourceRepo.GetAllAsync();
+        _from = DateTime.UtcNow.AddHours(-24);
+        _to = DateTime.UtcNow;
+        await ExecuteSearch();
+    }
+
+    private async Task ExecuteSearch()
+    {
+        _searching = true;
+        StateHasChanged();
+
+        _result = await SearchService.SearchAsync(
+            string.IsNullOrWhiteSpace(_query) ? null : _query,
+            string.IsNullOrWhiteSpace(_selectedSource) ? null : _selectedSource,
+            string.IsNullOrWhiteSpace(_selectedLevel) ? null : _selectedLevel,
+            null, _from, _to, _offset, _limit);
+
+        _searching = false;
+    }
+
+    private async Task PreviousPage()
+    {
+        _offset = Math.Max(0, _offset - _limit);
+        await ExecuteSearch();
+    }
+
+    private async Task NextPage()
+    {
+        _offset += _limit;
+        await ExecuteSearch();
+    }
+
+    private static string Truncate(string value, int maxLength) =>
+        value.Length <= maxLength ? value : value[..maxLength] + "...";
+
+    private static string GetLevelBadgeClass(string level) => level switch
+    {
+        "Trace" => "",
+        "Debug" => "",
+        "Information" => "badge-success",
+        "Warning" => "badge-warning",
+        "Error" => "badge-danger",
+        "Fatal" => "badge-danger",
+        _ => ""
+    };
+}

@@ -1,0 +1,57 @@
+@page "/retention"
+@using RVM.LogStream.Domain.Entities
+@using RVM.LogStream.Domain.Interfaces
+@inject IRetentionPolicyRepository RetentionRepo
+
+<h1>Retention Policies</h1>
+
+@if (_loaded)
+{
+    @if (_policies.Count == 0)
+    {
+        <div class="empty-state">No retention policies configured.</div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Pattern</th>
+                    <th>Retention Days</th>
+                    <th>Enabled</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var policy in _policies)
+                {
+                    <tr>
+                        <td><code>@policy.SourcePattern</code></td>
+                        <td>@policy.RetentionDays days</td>
+                        <td>
+                            <span class="@(policy.IsEnabled ? "status-active" : "status-inactive")">
+                                @(policy.IsEnabled ? "Yes" : "No")
+                            </span>
+                        </td>
+                        <td>@policy.CreatedAt.ToString("g")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    <div class="loading">Loading retention policies...</div>
+}
+
+@code {
+    private List<RetentionPolicy> _policies = [];
+    private bool _loaded;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _policies = await RetentionRepo.GetAllAsync();
+        _loaded = true;
+    }
+}

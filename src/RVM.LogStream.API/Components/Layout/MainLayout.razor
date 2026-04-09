@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+
+<div class="app-layout">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>RVM.LogStream</h2>
+            <span class="subtitle">Log Platform</span>
+        </div>
+        <ul class="nav-list">
+            <li><NavLink href="" Match="NavLinkMatch.All">Dashboard</NavLink></li>
+            <li><NavLink href="search">Log Search</NavLink></li>
+            <li><NavLink href="sources">Sources</NavLink></li>
+            <li><NavLink href="retention">Retention</NavLink></li>
+        </ul>
+    </nav>
+    <main class="main-content">
+        @Body
+    </main>
+</div>
