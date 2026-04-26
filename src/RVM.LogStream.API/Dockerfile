@@ -7,6 +7,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY nuget.config .
 COPY ["src/RVM.LogStream.API/RVM.LogStream.API.csproj", "src/RVM.LogStream.API/"]
 COPY ["src/RVM.LogStream.Domain/RVM.LogStream.Domain.csproj", "src/RVM.LogStream.Domain/"]
 COPY ["src/RVM.LogStream.Infrastructure/RVM.LogStream.Infrastructure.csproj", "src/RVM.LogStream.Infrastructure/"]
