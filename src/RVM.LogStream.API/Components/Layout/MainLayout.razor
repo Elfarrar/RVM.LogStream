@@ -1,7 +1,9 @@
 @inherits LayoutComponentBase
 
+<a class="skip-nav" href="#main-content">Pular para o conteúdo</a>
+
 <div class="app-layout">
-    <nav class="sidebar">
+    <nav class="sidebar" aria-label="Menu principal">
         <div class="sidebar-header">
             <h2>RVM.LogStream</h2>
             <span class="subtitle">Log Platform</span>
@@ -13,7 +15,7 @@
             <li><NavLink href="retention">Retention</NavLink></li>
         </ul>
     </nav>
-    <main class="main-content">
+    <main id="main-content" class="main-content" role="main">
         @Body
     </main>
 </div>
