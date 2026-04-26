@@ -8,6 +8,7 @@ using RVM.LogStream.API.Middleware;
 using RVM.LogStream.API.Services;
 using RVM.LogStream.Infrastructure;
 using RVM.LogStream.Infrastructure.Data;
+using RVM.Common.Security;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -82,6 +83,7 @@ try
         app.UsePathBase(pathBase);
 
     app.UseForwardedHeaders();
+    app.UseSecurityHeaders();
     app.UseStaticFiles();
     app.UseAntiforgery();
     app.UseMiddleware<CorrelationIdMiddleware>();
